@@ -1,0 +1,21 @@
+name: WFSL Repo Guard
+description: Deterministic repository hygiene and release admission enforcement
+author: WFSL
+
+inputs:
+  mode:
+    description: "Guard mode (repo or marketplace)"
+    required: false
+    default: repo
+  root:
+    description: "Repository root path"
+    required: false
+    default: .
+
+runs:
+  using: node20
+  main: dist/cli.js
+
+branding:
+  icon: shield
+  color: blue
