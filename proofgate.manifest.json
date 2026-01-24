@@ -1,61 +1,21 @@
 {
-  "version": "1.0.0",
-  "repoGuard": {
-    "git": {
-      "requireGitignore": true
-    },
-    "dependencies": {
-      "lockfileRequired": false
-    },
-    "build": {
-      "output": "dist",
-      "tracked": false
-    }
+  "name": "wfsl-repo-guard",
+  "version": "0.1.0",
+  "description": "WFSL Repository Guard. Emits deterministic structural repository state for ProofGate verification.",
+  "owner": "Wynergy Fibre Solutions Ltd",
+  "scope": "repository",
+  "guardType": "structural",
+  "tier": "opencore",
+  "entrypoint": null,
+  "artefacts": [
+    "wfsl.repo.state.txt",
+    "wfsl.repo.state.sha256",
+    "wfsl.repo.verdict.json",
+    "wfsl.repo.proofgate.bundle.json"
+  ],
+  "determinism": {
+    "inputs": "git-working-tree",
+    "outputs": "deterministic-text-and-json",
+    "hash": "sha256"
   }
 }
-# WFSL Session Bootstrap (Non-Admin)
-# Purpose:
-# - Establish deterministic environment for WFSL tools
-# - Avoid copy/paste failures by using a single entry script
-# - Validate ProofGate entry and current repo state safely
-
-Set-StrictMode -Version Latest
-$ErrorActionPreference = "Stop"
-
-function Fail([string]$m) { Write-Error $m; exit 10 }
-function Info([string]$m) { Write-Host $m }
-
-# 1) Define your canonical ProofGate entry once
-# Update this path only when ProofGate CLI moves.
-$proofgate = "C:\Users\Paul Wynn\github\wfsl-proofgate-cli-repo\wfsl-proofgate-cli\dist\index.js"
-
-if (-not (Test-Path $proofgate)) {
-  Fail "WFSL: ProofGate entry missing: $proofgate"
-}
-
-$env:WFSL_PROOFGATE_ENTRY = $proofgate
-Info "WFSL: WFSL_PROOFGATE_ENTRY set"
-
-# 2) Repo sanity (do not run outside a repo)
-try {
-  $gitRoot = (& git rev-parse --show-toplevel 2>$null).Trim()
-} catch { $gitRoot = "" }
-
-if (-not $gitRoot) {
-  Info "WFSL: Not in a git repo. Session ready for navigation."
-  exit 0
-}
-
-Info "WFSL: Repo root: $gitRoot"
-
-# 3) If repo has manifest, run status (non-destructive)
-$manifest = Join-Path $gitRoot "proofgate.manifest.json"
-if (Test-Path $manifest) {
-  Info "WFSL: Running Repo Guard status"
-  & node $env:WFSL_PROOFGATE_ENTRY status --manifest $manifest
-  exit $LASTEXITCODE
-}
-
-Info "WFSL: No proofgate.manifest.json found in repo root."
-Info "WFSL: Add manifest to enable Repo Guard enforcement."
-exit 0
