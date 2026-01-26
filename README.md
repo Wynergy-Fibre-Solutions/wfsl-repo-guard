@@ -1,112 +1,86 @@
+Commercial use requires a WFSL licence. See commercial-wfsl-offerings/HOW-TO-BUY.md.
+
 # WFSL Repo Guard
 
-Deterministic repository governance for the WFSL ecosystem.
+## Purpose
 
-WFSL Repo Guard enforces non-negotiable repository invariants before any
-commit or push is allowed. It does not infer intent, apply policy heuristics,
-or permit operator override.
+WFSL Repo Guard evaluates repository state against declared governance expectations.
 
-Behaviour is verified. State is proven. Drift is rejected.
+It inspects repository structure, metadata, and artefacts to determine whether a repository meets defined readiness, hygiene, and integrity criteria.
 
----
-
-## What Repo Guard Is
-
-Repo Guard is a deterministic enforcement layer that validates repository
-state using machine-verifiable rules defined in a ProofGate manifest.
-
-It ensures that repositories remain:
-
-- Structurally valid
-- Reproducible
-- Audit-ready
-- Immune to accidental or coerced mutation
-
-Repo Guard never mutates repositories.
-It only permits or blocks actions based on verified state.
+Repo Guard does not enforce policy. It reports state.
 
 ---
 
-## What Repo Guard Is Not
+## Functional Guarantees
 
-Repo Guard is not:
+WFSL Repo Guard provides:
 
-- A linter
-- A formatter
-- A CI replacement
-- A policy engine with opinions
-- A developer productivity tool
+- Deterministic repository inspection
+- Explicit pass, fail, or unknown outcomes
+- Non-destructive analysis
+- Evidence-referenced results
 
-It exists solely to prevent invalid states from entering history.
-
----
-
-## Core Guarantees
-
-Repo Guard enforces the following guarantees:
-
-- Git history cannot record an invalid repository state
-- Lockfile drift cannot be silently introduced
-- Ignored artefacts cannot be committed accidentally
-- Build output rules are deterministic and explicit
-- Governance decisions are delegated, never embedded
-
-All decisions are evaluated by ProofGate.
+All evaluations are repeatable and auditable.
 
 ---
 
-## Deterministic Model
+## What This Component Does Not Do
 
-Repo Guard operates under a strict deterministic model:
+WFSL Repo Guard explicitly does not:
 
-1. Repository state is inspected
-2. ProofGate is invoked
-3. A verdict is returned
-4. Actions are permitted or rejected
+- Modify repositories
+- Rewrite history
+- Enforce changes
+- Make trust claims
+- Execute remediation
 
-There are no retries.
-There is no fallback.
-There is no interactive mode.
-
-If state is invalid, the operation fails.
+It evaluates and reports only.
 
 ---
 
-## ProofGate Delegation
+## Evaluation Scope
 
-Repo Guard does not contain governance logic.
+WFSL Repo Guard may evaluate:
 
-All rules are defined in `proofgate.manifest.json` and evaluated by
-WFSL ProofGate CLI.
+- Repository structure and layout
+- Presence and state of governance artefacts
+- Evidence directories
+- Build output indicators
+- Declared guard configurations
 
-This separation guarantees:
-
-- Governance rules can evolve without rewriting guards
-- Enforcement logic remains minimal and auditable
-- Behaviour is identical across machines and environments
-
-If ProofGate is unavailable, Repo Guard fails closed.
+Evaluation scope is transparent and deterministic.
 
 ---
 
-## Git Hook Enforcement
+## Role in the WFSL Platform
 
-Repo Guard is enforced through deterministic Git hooks:
+WFSL Repo Guard occupies a governance inspection tier within the WFSL platform.
 
-- pre-commit
-- pre-push
+It is used by:
 
-Hooks invoke Repo Guard, which in turn invokes ProofGate.
+- WFSL ProofGate CLI
+- Governance workflows
+- Continuous inspection pipelines
+- Compliance preparation processes
 
-No commit or push may proceed without a valid verdict.
-
-Hooks are installed locally per repository and are not optional.
+Repo Guard outputs are intended to inform decisions, not make them.
 
 ---
 
-## Installation
+## Classification and Licence
 
-Repo Guard is installed via WFSL tooling.
+Classification: WFSL Open  
+Licence: Apache License 2.0
 
-Hooks are deployed using the provided installer:
+This repository is open-source and auditable.
 
+Commercial and production reliance requires a valid WFSL licence.
+
+---
+
+## Stability
+
+This repository is considered stable once evaluation criteria and output formats are fixed.
+
+Changes to evaluation logic require explicit versioning and documentation.
