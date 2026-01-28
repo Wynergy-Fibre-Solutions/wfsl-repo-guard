@@ -84,3 +84,24 @@ Commercial and production reliance requires a valid WFSL licence.
 This repository is considered stable once evaluation criteria and output formats are fixed.
 
 Changes to evaluation logic require explicit versioning and documentation.
+
+---
+
+## WFSL Platform Membership
+
+**Platform:** WFSL Verification Platform
+
+**Role:**  
+Provides deterministic repository state verification and governance compliance checks as part of the WFSL Verification Platform.
+
+**Guarantees:**  
+- Repository state validation  
+- Deterministic verification results  
+- Licence and governance compliance signalling  
+- No code execution or modification  
+- No behavioural inference  
+
+**Boundary:**  
+This repository performs verification only and does not execute builds, modify repositories, or enforce policy actions.
+
+See: WFSL-PLATFORM-INDEX.md
