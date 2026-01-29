@@ -1,0 +1,16 @@
+{
+  "schema": "wfsl-trust-manifest-v1",
+  "repo": "wfsl-repo-guard",
+  "owner": "Wynergy-Fibre-Solutions",
+  "purpose": "RepoGuard enforcement and deterministic verification authority",
+  "trust": {
+    "commitSigning": {
+      "required": true,
+      "algorithm": "ed25519",
+      "keyId": "EDB9D353EFDC4469E9A626B67DB586791EEE99F0"
+    },
+    "deterministicBuild": true,
+    "ciEnforced": true
+  },
+  "issuedUtc": "2026-01-29T00:00:00Z"
+}
