@@ -1,0 +1,21 @@
+{
+  "name": "wfsl-repo-guard",
+  "version": "1.0.0",
+  "description": "WFSL Repo Guard",
+  "type": "module",
+  "main": "dist/index.js",
+  "scripts": {
+    "build": "tsc",
+    "start": "node dist/index.js"
+  },
+  "author": "WFSL",
+  "license": "ISC",
+  "dependencies": {
+    "@wfsl/shared-verifier": "file:../wfsl-shared-verifier",
+    "wfsl-trust-recover-cli": "file:../wfsl-trust-recover-cli"
+  },
+  "devDependencies": {
+    "@types/node": "^25.1.0",
+    "typescript": "^5.9.3"
+  }
+}
