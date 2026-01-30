@@ -1,10 +1,14 @@
 import { spawnSync } from "node:child_process";
+import { verifyEd25519 } from "@wfsl/shared-verifier/node";
 
 type TrustResult = {
   trust: "CONFIRMED" | "INVALID";
   opState: "OK" | "AGENT_CONTENDED";
   fingerprint?: string | null;
   evidenceHash?: string;
+  signature?: string;
+  publicKey?: string;
+  payload?: unknown;
 };
 
 function runTRE(): TrustResult {
@@ -24,7 +28,6 @@ function runTRE(): TrustResult {
   );
 
   const stdout = proc.stdout?.trim();
-
   if (!stdout) {
     throw new Error("TRE produced no output");
   }
@@ -40,17 +43,43 @@ function runTRE(): TrustResult {
     throw new Error("TRE output missing required fields");
   }
 
-  return {
-    trust: parsed.trust,
-    opState: parsed.opState,
-    fingerprint: parsed.fingerprint ?? null,
-    evidenceHash: parsed.evidenceHash
-  };
+  return parsed;
 }
 
 export function runCli(): void {
   const result = runTRE();
 
+  // --- SIGNATURE ENFORCEMENT ---
+  if (
+    !result.signature ||
+    !result.publicKey ||
+    !result.payload
+  ) {
+    throw new Error("TRE signature material missing");
+  }
+
+  const verified = verifyEd25519(
+    JSON.stringify(result.payload),
+    result.signature,
+    result.publicKey
+  );
+
+  if (!verified) {
+    process.stderr.write(
+      JSON.stringify(
+        {
+          error: "TRE_SIGNATURE_INVALID",
+          trust: result.trust,
+          opState: result.opState
+        },
+        null,
+        2
+      )
+    );
+    process.exit(4);
+  }
+
+  // --- VERIFIED OUTPUT ---
   console.log(
     JSON.stringify(
       {
@@ -58,7 +87,8 @@ export function runCli(): void {
           trust: result.trust,
           opState: result.opState,
           fingerprint: result.fingerprint ?? null,
-          evidenceHash: result.evidenceHash ?? null
+          evidenceHash: result.evidenceHash ?? null,
+          signatureVerified: true
         }
       },
       null,
