@@ -1,78 +1,70 @@
-import path from "node:path";
-import { repoGuardCheck, writeEvidence } from "./engine.js";
-import type { WFSLRepoGuardMode } from "./types.js";
+import { spawnSync } from "node:child_process";
 
-function usage(): string {
-  return [
-    "WFSL Repo Admission Guard v1",
-    "",
-    "Usage:",
-    "  wfsl-repo-guard check --root <path> --mode <repo|marketplace>",
-    "",
-    "Examples:",
-    "  wfsl-repo-guard check --root . --mode repo",
-    "  wfsl-repo-guard check --root C:\\Users\\Paul\\github\\wfsl-admission-guard --mode marketplace"
-  ].join("\n");
-}
+type TrustResult = {
+  trust: "CONFIRMED" | "INVALID";
+  opState: "OK" | "AGENT_CONTENDED";
+  fingerprint?: string | null;
+  evidenceHash?: string;
+};
 
-function getArg(name: string): string | undefined {
-  const idx = process.argv.findIndex((a) => a === name);
-  if (idx === -1) return undefined;
-  return process.argv[idx + 1];
-}
+function runTRE(): TrustResult {
+  const trePath = process.env.WFSL_TRE_PATH;
 
-function hasFlag(name: string): boolean {
-  return process.argv.includes(name);
-}
-
-function parseMode(raw: string | undefined): WFSLRepoGuardMode {
-  const v = (raw ?? "repo").toLowerCase();
-  if (v === "repo" || v === "marketplace") return v;
-  return "repo";
-}
-
-async function main(): Promise<void> {
-  const cmd = process.argv[2];
-
-  if (!cmd || hasFlag("--help") || hasFlag("-h")) {
-    console.log(usage());
-    process.exit(0);
+  if (!trePath) {
+    throw new Error("WFSL_TRE_PATH is not set");
   }
 
-  if (cmd !== "check") {
-    console.error(`Unknown command: ${cmd}`);
-    console.log(usage());
-    process.exit(2);
-  }
-
-  const root = getArg("--root") ?? ".";
-  const mode = parseMode(getArg("--mode"));
-
-  const result = repoGuardCheck({ root, mode });
-
-  const rootAbs = path.resolve(root);
-  const written = writeEvidence(rootAbs, result.evidence);
-
-  console.log(`WFSL Repo Guard v1`);
-  console.log(`Mode: ${mode}`);
-  console.log(`Root: ${rootAbs}`);
-  console.log(`Outcome: ${result.evidence.outcome}`);
-  console.log(`Wrote: ${written.jsonPath}`);
-  console.log(`Wrote: ${written.mdPath}`);
-
-  if (!result.ok) {
-    for (const f of result.evidence.findings) {
-      console.error(`- ${f.code}: ${f.message}`);
-      if (f.paths) for (const p of f.paths) console.error(`  - Path: ${p}`);
-      if (f.missing) for (const m of f.missing) console.error(`  - Missing: ${m}`);
+  const proc = spawnSync(
+    process.execPath,
+    [trePath],
+    {
+      encoding: "utf8",
+      stdio: ["ignore", "pipe", "pipe"]
     }
-    process.exit(result.evidence.exit_code);
+  );
+
+  const stdout = proc.stdout?.trim();
+
+  if (!stdout) {
+    throw new Error("TRE produced no output");
   }
 
-  process.exit(0);
+  let parsed: any;
+  try {
+    parsed = JSON.parse(stdout);
+  } catch {
+    throw new Error("TRE output was not valid JSON");
+  }
+
+  if (!parsed.trust || !parsed.opState) {
+    throw new Error("TRE output missing required fields");
+  }
+
+  return {
+    trust: parsed.trust,
+    opState: parsed.opState,
+    fingerprint: parsed.fingerprint ?? null,
+    evidenceHash: parsed.evidenceHash
+  };
 }
 
-main().catch((err) => {
-  console.error(`WFSL Repo Guard failed: ${err?.message ?? String(err)}`);
-  process.exit(2);
-});
+export function runCli(): void {
+  const result = runTRE();
+
+  console.log(
+    JSON.stringify(
+      {
+        wfsl: {
+          trust: result.trust,
+          opState: result.opState,
+          fingerprint: result.fingerprint ?? null,
+          evidenceHash: result.evidenceHash ?? null
+        }
+      },
+      null,
+      2
+    )
+  );
+
+  process.exit(result.trust === "CONFIRMED" ? 0 : 3);
+}
